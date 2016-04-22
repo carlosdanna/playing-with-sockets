@@ -13,51 +13,62 @@
     #messages li:nth-child(odd) { background: #eee; }
     </style>
 </head>
-<body>
-    <ul id="messages"></ul>
-    <form action="">
-        <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
+<body ng-app = 'myApp'>
+    <div ng-controller='mainController'>
+
+        <ul id="messages"></ul>
+        <form>
+            <input id="m" autocomplete="off" ng-model = "message"/>
+            <button ng-click="sendMessage()">Send</button>
+        </form>
+
+    </div>
+
+    <!-- This library is being piped directly from node in order to use socket and IO operations -->
     <script src="/socket.io/socket.io.js"></script>
+
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src = "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.js"></script>
     <script>
-    //This allows the client to connect to the application
-    var person = prompt("Please enter your name", "Harry Potter");
-    var socket = io();
-    var documentLoaded = false
-    $( document ).ready(function() {
-        socket.emit('get history');
 
-    });
+    angular.module('myApp',[]).controller('mainController', ["$scope" , function($scope){
+        var socket = io();
+        var documentLoaded = false;
+        var person = 'testUser';
+        var messsages = angular.element(document.querySelector('#messages'));
 
-    //Code to send the message
-    $('form').submit(function(){
-        var message = $('#m').val();
-        var user= {
-            userName: person,
-            message : $('#m').val()
-        };
-        socket.emit('chat message', user);
-        $('#m').val('');
-        return false;
-    });
+        $( document ).ready(function() {
+            socket.emit('get history');
+        });
 
-    socket.on('chat message', function(msg){
-        if(msg.userName === person){
-            $('#messages').append($('<li>').text(msg.userName + '(you): ' + msg.message));
-        }else{
-            $('#messages').append($('<li>').text(msg.userName + ': ' + msg.message));
+        //Code to send the message
+        $scope.sendMessage = function(){
+            var user = {
+                user: person,
+                message: $scope.message
+            };
+            socket.emit('chat message', user);
+            $scope.message = "";
         }
-    });
 
-    socket.on('get history', function(history){
-        if(documentLoaded === false){
-            for(var i=0; i< history.length;i++){
-                documentLoaded = true;
-                $('#messages').append($('<li>').text(history[i].userName + ': ' + history[i].message));
+        socket.on('chat message', function(msg){
+            if(msg.userName === person){
+                messages.append('<li>' + msg.user + '(you): ' + msg.message);
+            }else{
+                messsages.append('<li>' + msg.user + ': ' + msg.message);
             }
-        }
-    });
+        });
+
+        socket.on('get history', function(history){
+            if(documentLoaded === false){
+                for(var i=0; i< history.length;i++){
+                    documentLoaded = true;
+                    messsages.append('<li>' + history[i].user + ': ' + history[i].message);                }
+            }
+        });
+
+    }]);
+
     </script>
 </body>
 </html>
