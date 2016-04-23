@@ -14,13 +14,19 @@
     </style>
 </head>
 <body ng-app = "myApp">
-
-    <div ng-controller="mainController" ng-init="initialize()">
-        <ul id="messages"></ul>
-        <form>
-            <input id="m" autocomplete="off" ng-model = "message"/>
-            <button ng-click="sendMessage()">Send</button>
+    <div ng-controller="mainController">
+        <form ng-hide="noname">
+            <input autocomplete="off" ng-model = "person" placeholder="Enter your name"/>
+            <button ng-click="sendName(person)">Save</button>
         </form>
+
+        <div ng-show="noname">
+            <ul id="messages"></ul>
+            <form>
+                <input id="m" autocomplete="off" ng-model = "message"/>
+                <button ng-click="sendMessage()">Send</button>
+            </form>
+        </div>
     </div>
 
     <!-- This library is being piped directly from node in order to use socket and IO operations -->
@@ -28,19 +34,23 @@
 
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script type="text/javascript" src = "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.js"></script>
-    <script>
+    <script type="text/javascript">
 
     angular.module('myApp',[]).controller('mainController', ["$scope" , function($scope){
         var socket = io();
         var documentLoaded = false;
-        var person = 'testUser';
-        var messsages = angular.element(document.querySelector('#messages'));
+        var person = 'newGuy';
 
-        $scope.initialize = function()
+        var messages = angular.element(document.querySelector('#messages'));
+
+        $scope.noname = false;
+
+        $scope.sendName = function(name)
         {
+            $scope.noname = !$scope.noname;
+            person = name
             socket.emit('get history');
         }
-
 
         //Code to send the message
         $scope.sendMessage = function(){
@@ -52,25 +62,31 @@
             $scope.message = "";
         }
 
-        socket.on('chat message', function(msg){
-            if(msg.userName === person){
+        socket.on('chat message', function(msg)
+        {
+            if(msg.user === person){
                 messages.append('<li>' + msg.user + '(you): ' + msg.message);
             }else{
-                messsages.append('<li>' + msg.user + ': ' + msg.message);
+                messages.append('<li>' + msg.user + ': ' + msg.message);
             }
         });
 
         socket.on('get history', function(history){
-            if(documentLoaded === false){
+            if(documentLoaded === false)
+            {
                 for(var i=0; i< history.length;i++){
-                    messsages.append('<li>' + history[i].user + ': ' + history[i].message);                }
+                    if(history[i].user === person){
+                        messages.append('<li>' + history[i].user + '(you): ' + history[i].message);
+                    }else{
+                        messages.append('<li>' + history[i].user + ': ' + history[i].message);
+                    }
                 }
-                documentLoaded = true;
-            });
+            }
+            documentLoaded = true;
+        });
 
+    }]);
 
-        }]);
-
-        </script>
-    </body>
-    </html>
+    </script>
+</body>
+</html>
