@@ -13,15 +13,14 @@
     #messages li:nth-child(odd) { background: #eee; }
     </style>
 </head>
-<body ng-app = 'myApp'>
-    <div ng-controller='mainController'>
+<body ng-app = "myApp">
 
+    <div ng-controller="mainController" ng-init="initialize()">
         <ul id="messages"></ul>
         <form>
             <input id="m" autocomplete="off" ng-model = "message"/>
             <button ng-click="sendMessage()">Send</button>
         </form>
-
     </div>
 
     <!-- This library is being piped directly from node in order to use socket and IO operations -->
@@ -37,9 +36,11 @@
         var person = 'testUser';
         var messsages = angular.element(document.querySelector('#messages'));
 
-        $( document ).ready(function() {
+        $scope.initialize = function()
+        {
             socket.emit('get history');
-        });
+        }
+
 
         //Code to send the message
         $scope.sendMessage = function(){
@@ -62,13 +63,14 @@
         socket.on('get history', function(history){
             if(documentLoaded === false){
                 for(var i=0; i< history.length;i++){
-                    documentLoaded = true;
                     messsages.append('<li>' + history[i].user + ': ' + history[i].message);                }
-            }
-        });
+                }
+                documentLoaded = true;
+            });
 
-    }]);
 
-    </script>
-</body>
-</html>
+        }]);
+
+        </script>
+    </body>
+    </html>
