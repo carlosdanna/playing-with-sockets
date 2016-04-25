@@ -6,8 +6,11 @@ var io = require("socket.io")(http);
 var port = process.env.PORT || 3000;
 
 var history = [];
+var players = [];
+var id = 9001;
 
-app.use('/assets', express.static(__dirname + '/public'))
+
+app.use('/assets', express.static(__dirname + '/public'));
 
 app.get('/', function(req,res){
     res.sendFile(__dirname + "/index.html");
@@ -15,13 +18,18 @@ app.get('/', function(req,res){
 
 io.on('connection', function(socket){
     console.log("client connected");
-    socket.on('get history', function(){
-        io.emit('get history', history);
+    socket.on('create player', function(_player){
+        _player.id = id;
+        ++id;
+        players.push(_player);
+        io.emit('id player', _player.id);
+        io.emit('create player', players);
     });
 
-    socket.on('chat message', function(user){
-        history.push(user);
-        io.emit('chat message', user);
+    socket.on('update players', function(_player){
+        players[0] = _player;
+        console.log(players);
+        io.emit('update players', players);
     });
 
     socket.on('disconnect', function(){

@@ -9,10 +9,124 @@
     <script src="/socket.io/socket.io.js"></script>
 
     <script src="/assets/js/lib/phaser.js"></script>
-    <script type="text/javascript" src = "https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.js"></script>
     <script type="text/javascript">
+    'use strict'
+    var id = 0;
+    var socket = io();
+    var ScreenWidth = 800;
+    var ScreenHeight = 600;
+    var game = new Phaser.Game(ScreenWidth, ScreenHeight, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+    var player;
+    var cursors;
+    var jumpButton;
+    var playerData = {
+        id: 0,
+        position: {
+            x: 0,
+            y: 0,
+        },
+        velocity: {
+            x: 0,
+            y: 0,
+        }
+    };
 
-    
+    var otherPlayers = [];
+
+    function preload() {
+        game.stage.backgroundColor = '#85b5e1';
+
+        game.load.baseURL = 'http://examples.phaser.io/assets/';
+        game.load.crossOrigin = 'anonymous';
+
+        game.load.image('player', 'sprites/phaser-dude.png');
+        game.load.image('ball', 'sprites/aqua_ball.png');
+    }
+
+    function create() {
+        player = game.add.sprite(100, 200, 'player');
+
+        game.physics.arcade.enable(player);
+
+        player.body.collideWorldBounds = true;
+
+        cursors = game.input.keyboard.createCursorKeys();
+        jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+        playerData.velocity = player.body.velocity;
+        playerData.position = player.body.position;
+        console.log(playerData);
+        socket.emit('create player', playerData);
+        socket.on('id player' , function(_id){
+            playerData.id = _id;
+            id = _id;
+        });
+
+        socket.on('create player', function(playersData){
+            otherPlayers = playersData;
+        });
+    }
+
+    function update() {
+
+        player.body.velocity.x = 0;
+        player.body.velocity.y = 0;
+
+        if (cursors.left.isDown)
+        {
+            player.body.velocity.x = -250;
+        }
+        else if (cursors.right.isDown)
+        {
+            player.body.velocity.x = 250;
+        }
+        else if (cursors.up.isDown)
+        {
+            player.body.velocity.y = -250;
+        }
+        else if (cursors.down.isDown)
+        {
+            player.body.velocity.y = 250;
+        }
+
+        playerData.velocity = player.body.velocity;
+        playerData.position = player.body.position;
+        socket.emit('update players', playerData);
+        updatePlayers(playerData);
+        if (jumpButton.isDown && (player.body.onFloor() || player.body.touching.down))
+        {
+            player.body.velocity.y = -400;
+        }
+    }
+
+    function createNewItems()
+    {
+        var x;
+        var y;
+        for(var i= 0 ; i< 100; i++){
+            x = Math.random()*ScreenWidth;
+            y = Math.random()*ScreenHeight;
+            var p = game.add.sprite(x, y, 'ball');
+            game.physics.arcade.enable(p);
+            p.body.collideWorldBounds = true;
+            p.body.gravity.y = 3 ;
+            otherPlayers.push(p);
+        }
+    }
+
+    //TODO: Create a function that creates all players already in the session
+    //TODO: Create a function that deletes player data in case
+    // of user disconnecting from the session
+    //TODO: this function should update the status of other players
+    function updatePlayers(playerData){
+        for (var i = 0; i< playerData.length; i++){
+            if (playerData[i].id != id)
+            {
+
+            }
+        }
+    }
+
     </script>
 </body>
 </html>
